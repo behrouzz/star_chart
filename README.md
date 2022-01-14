@@ -2,7 +2,7 @@
 **Website:** [AstroDataScience.Net](https://astrodatascience.net/)<br/>
 
 # Star Chart
-Creating star chart with python*
+Creating star charts with python
 
 
 ## Example
