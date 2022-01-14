@@ -1,11 +1,11 @@
 import pandas as pd
 import numpy as np
-from datetime import datetime
-import matplotlib.pyplot as plt
+#from datetime import datetime
+#import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
 from hypatie.plots import plot_radec, plot_altaz
 from hypatie.transform import radec_to_altaz
-from hypatie.data import cities
+#from hypatie.data import cities
 from constellations import constellations
 from hipparcos import hip_stars
 from io import StringIO
@@ -63,12 +63,3 @@ def draw_chart(obs_loc, t, mag_max, alpha=0.3):
     ax.add_collection(LineCollection(lines_xy, alpha=alpha))
     
     return fig, ax, df_bright
-
-
-
-#t = datetime(2022, 1, 13, 20, 21)
-t = datetime.now()
-obs_loc = cities['strasbourg'][:2]
-
-ax, df = draw_chart(obs_loc, t, mag_max=4, alpha=0.3)
-plt.show()
