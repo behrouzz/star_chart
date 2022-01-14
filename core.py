@@ -9,12 +9,7 @@ from hypatie.data import cities
 from stardata import hip_stars, constellations
 from io import StringIO
 
-
-def draw_chart(obs_loc, t, alpha=0.3):
-    lon, lat = obs_loc
-
-    # Read constellations data
-    # ------------------------
+def load_constellations():
     data = constellations.split('\n')[1:-1]
     dc = {}
     for i in data:
@@ -27,46 +22,53 @@ def draw_chart(obs_loc, t, alpha=0.3):
     for k,v in dc.items():
         for i in v:
             edges.append(i)
+
+    return edges
+
+def load_hipparcos():
+    df = pd.read_csv(StringIO(hip_stars)).set_index('hip')
+    return df
+
+
+def draw_chart(obs_loc, t, mag_max=5, alpha=0.3):
+    lon, lat = obs_loc
+    
+    # Read Hipparcos stars
+    df = load_hipparcos()
+    df['alt'], df['az'] = radec_to_altaz(lon, lat, df['ra'], df['dec'], t)
+    df = df[df['alt']>0]
+    
+    # Read constellations data
+    edges = load_constellations()
+    ls = []
+    for i in edges:
+        if (i[0] in df.index) and (i[1] in df.index):
+            ls.append(i)
+    edges = ls
+
     edge1 = [i[0] for i in edges]
     edge2 = [i[1] for i in edges]
 
-    # Read Hipparcos stars
-    # --------------------
-    df = pd.read_csv(StringIO(hip_stars)).set_index('hip')
-
-
     marker_size = (0.5 + 7 - df['Vmag'].values) ** 2.0
 
-    #t = t.isoformat()[:19].replace('T', ' ')
+    df_bright = df[df['Vmag']<mag_max]
 
-    alt, az = radec_to_altaz(
-        lon=lon, lat=lat,
-        ra=df['ra'], dec=df['dec'],
-        t=t)
-
-    new_df = pd.DataFrame(
-        {'hip':df.index.values,
-         'az':az, 'alt':alt,
-         'Vmag':df['Vmag'].values})
-
-    new_df = new_df.set_index('hip')
-
-    bright_df = new_df[new_df['Vmag']<5]
-
-    xy1 = new_df[['az', 'alt']].loc[edge1].values
-    xy2 = new_df[['az', 'alt']].loc[edge2].values
+    xy1 = df[['az', 'alt']].loc[edge1].values
+    xy2 = df[['az', 'alt']].loc[edge2].values
     xy1[:,0] = xy1[:,0]*(np.pi/180)
     xy2[:,0] = xy2[:,0]*(np.pi/180)
     lines_xy = np.array([*zip(xy1,xy2)])
 
-    ax = plot_altaz(bright_df['az'], bright_df['alt'], mag=bright_df['Vmag'])
+    ax = plot_altaz(df_bright['az'], df_bright['alt'], mag=df_bright['Vmag'])
     ax.add_collection(LineCollection(lines_xy, alpha=alpha))
+    
+    return ax, df
 
-    plt.show()
 
 
-
-t = datetime(2022, 1, 13, 20, 21)
+#t = datetime(2022, 1, 13, 20, 21)
+t = datetime.now()
 obs_loc = cities['strasbourg'][:2]
 
-draw_chart(obs_loc, t, alpha=0.4)
+ax, df = draw_chart(obs_loc, t, mag_max=5, alpha=0.4)
+plt.show()
