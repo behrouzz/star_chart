@@ -2,7 +2,7 @@
 **Website:** [AstroDataScience.Net](https://astrodatascience.net/)<br/>
 
 # Star Chart
-*reating star chart with python*
+Creating star chart with python*
 
 
 ## Example
@@ -19,4 +19,3 @@ obs_loc = cities['strasbourg'][:2]
 fig, ax, df = draw_chart(obs_loc, t, mag_max=4, alpha=0.3)
 plt.show()
 ```
-
