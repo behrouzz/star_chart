@@ -6,7 +6,8 @@ from matplotlib.collections import LineCollection
 from hypatie.plots import plot_radec, plot_altaz
 from hypatie.transform import radec_to_altaz
 from hypatie.data import cities
-from stardata import hip_stars, constellations
+from constellations import constellations
+from hipparcos import hip_stars
 from io import StringIO
 
 def load_constellations():
