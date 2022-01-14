@@ -26,44 +26,43 @@ def load_constellations():
 
     return edges
 
+
 def load_hipparcos():
-    df = pd.read_csv(StringIO(hip_stars)).set_index('hip')
-    return df
+    return pd.read_csv(StringIO(hip_stars)).set_index('hip')
 
 
-def draw_chart(obs_loc, t, mag_max=5, alpha=0.3):
+def visible_hipparcos(obs_loc, t):
     lon, lat = obs_loc
-    
-    # Read Hipparcos stars
     df = load_hipparcos()
     df['alt'], df['az'] = radec_to_altaz(lon, lat, df['ra'], df['dec'], t)
     df = df[df['alt']>0]
+    return df
+
+
+
+def draw_chart(obs_loc, t, mag_max, alpha=0.3):
+    df = visible_hipparcos(obs_loc, t)
+    df_bright = df[df['Vmag']<mag_max]
     
     # Read constellations data
     edges = load_constellations()
-    ls = []
-    for i in edges:
-        if (i[0] in df.index) and (i[1] in df.index):
-            ls.append(i)
-    edges = ls
+    edges = [i for i in edges if (i[0] in df.index) and (i[1] in df.index)]
 
     edge1 = [i[0] for i in edges]
     edge2 = [i[1] for i in edges]
-
-    marker_size = (0.5 + 7 - df['Vmag'].values) ** 2.0
-
-    df_bright = df[df['Vmag']<mag_max]
-
+    
     xy1 = df[['az', 'alt']].loc[edge1].values
     xy2 = df[['az', 'alt']].loc[edge2].values
     xy1[:,0] = xy1[:,0]*(np.pi/180)
     xy2[:,0] = xy2[:,0]*(np.pi/180)
     lines_xy = np.array([*zip(xy1,xy2)])
 
-    ax = plot_altaz(df_bright['az'], df_bright['alt'], mag=df_bright['Vmag'])
+    marker_size = (0.5 + 7 - df['Vmag'].values) ** 2.0
+
+    fig, ax = plot_altaz(df_bright['az'], df_bright['alt'], mag=df_bright['Vmag'])
     ax.add_collection(LineCollection(lines_xy, alpha=alpha))
     
-    return ax, df
+    return fig, ax, df_bright
 
 
 
@@ -71,5 +70,5 @@ def draw_chart(obs_loc, t, mag_max=5, alpha=0.3):
 t = datetime.now()
 obs_loc = cities['strasbourg'][:2]
 
-ax, df = draw_chart(obs_loc, t, mag_max=5, alpha=0.4)
+ax, df = draw_chart(obs_loc, t, mag_max=4, alpha=0.3)
 plt.show()
