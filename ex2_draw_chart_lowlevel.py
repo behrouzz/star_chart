@@ -11,5 +11,5 @@ df_show = df[df['Vmag']<4]
 dc_const = load_constellations()
 
 
-fig, ax, df_show = draw_chart(df, df_show, dc_const, alpha=0.3)
+fig, ax, df_show = draw_chart(df, df_show, dc_const, alpha=0.3, figsize=(20,20))
 plt.show()
