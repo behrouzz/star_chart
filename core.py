@@ -19,13 +19,24 @@ def load_constellations():
         stars = [int(j) for j in stars]
         edges = [tuple(stars[k:k+2]) for k in [*range(0,len(stars),2)]]
         dc[name] = edges
+    return dc
+
+def create_edges(dc):
+    """
+    Create edges (lines) connecting each pair of stars
+    
+    Arguments
+    ---------
+        dc : dictionary of constellations
+    Returns
+    -------
+        edges : list of all edges
+    """
     edges = []
     for k,v in dc.items():
         for i in v:
             edges.append(i)
-
     return edges
-
 
 def load_hipparcos():
     return pd.read_csv(StringIO(hip_stars)).set_index('hip')
@@ -38,14 +49,13 @@ def visible_hipparcos(obs_loc, t):
     df = df[df['alt']>0]
     return df
 
-
-
-def draw_chart(obs_loc, t, mag_max, alpha=0.3):
-    df = visible_hipparcos(obs_loc, t)
-    df_bright = df[df['Vmag']<mag_max]
-    
-    # Read constellations data
-    edges = load_constellations()
+def draw_chart(df, df_show, dc_const, alpha):
+    """
+    df : visible hipparcos stars for the observer
+    df_show : stars to be shown in the chart
+    dc_const : dictionary of constellations
+    """
+    edges = create_edges(dc_const)
     edges = [i for i in edges if (i[0] in df.index) and (i[1] in df.index)]
 
     edge1 = [i[0] for i in edges]
@@ -59,7 +69,29 @@ def draw_chart(obs_loc, t, mag_max, alpha=0.3):
 
     marker_size = (0.5 + 7 - df['Vmag'].values) ** 2.0
 
-    fig, ax = plot_altaz(df_bright['az'], df_bright['alt'], mag=df_bright['Vmag'])
+    fig, ax = plot_altaz(df_show['az'], df_show['alt'], mag=df_show['Vmag'])
     ax.add_collection(LineCollection(lines_xy, alpha=alpha))
     
-    return fig, ax, df_bright
+    return fig, ax, df_show
+
+
+def draw(obs_loc, t, mag_max=5, alpha=0.3):
+    df = visible_hipparcos(obs_loc, t)
+    df_show = df[df['Vmag']<mag_max]
+    dc_const = load_constellations()
+    return draw_chart(df, df_show, dc_const, alpha)
+
+
+dc = load_constellations()
+
+const2star = {}
+for k,v in dc.items():
+    ls = []
+    for i in range(len(v)):
+        ls = ls + list(v[i])
+    const2star[k] = list(set(ls))
+    
+star2const = {}
+for k,v in const2star.items():
+    for i in v:
+        star2const[i] = k
