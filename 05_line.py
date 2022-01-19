@@ -19,22 +19,6 @@ edges = [i for i in edges if (i[0] in df.index) and (i[1] in df.index)]
 import plotly.graph_objects as go
 import numpy as np
 
-#df = df_show
-
-r = 90 - df['alt'].values
-theta = df['az'].values
-size = 1 + (df['Vmag'].max() - df['Vmag'].values)
-sizeref = 2.*max(size)/(8.**2)
-
-
-marker = {'size'    : size,
-          'sizemode': 'area',
-          'sizeref' : sizeref,
-          'sizemin' : 2}
-
-#data = go.Scatterpolar(r=r, theta=theta, mode='markers', marker=marker)
-line_color=dict(color="blue")
-
 data = []
 
 for e in edges:
@@ -43,7 +27,7 @@ for e in edges:
     th2 = df.loc[e[1]]['az']
     r2  = 90 - df.loc[e[1]]['alt']
 
-    data.append(go.Scatterpolar(r=[r1,r2], theta=[th1,th2], line=line_color, showlegend=False, hoverinfo='none'))
+    data.append(go.Scatterpolar(r=[r1,r2], theta=[th1,th2], line={'color':'blue'}, showlegend=False, hoverinfo='none'))
 
 
 fig = go.Figure(data=data)
