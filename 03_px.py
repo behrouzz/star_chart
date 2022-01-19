@@ -30,22 +30,21 @@ now_time = t.isoformat()[11:16]
 title = city.title() + ' | ' + now_date + ' | ' + now_time
 
 
-df = df_show
-df = df.reset_index()
-df['hip'] = 'HIP ' + df['hip'].astype(str)
+df_show = df_show.reset_index()
+df_show['hip'] = 'HIP ' + df_show['hip'].astype(str)
 
 
-df['new_az'] = df['az']#*(np.pi/180)
-df['new_alt'] = 90-df['alt']
+df_show['new_az'] = df_show['az']#*(np.pi/180)
+df_show['new_alt'] = 90-df_show['alt']
 
-df['size'] = 0.5 + (df['Vmag'].max() - df['Vmag'].values)
+df_show['size'] = 0.5 + (df_show['Vmag'].max() - df_show['Vmag'].values)
 
 hover_data = {'hip':False, 'ra':':.4f', 'dec':':.4f',
               'Vmag':':.2f',
               'alt':False, 'az':False,
               'new_az':False, 'new_alt':False, 'size':False}
 
-fig = px.scatter_polar(df, r="new_alt", theta="new_az",
+fig = px.scatter_polar(df_show, r="new_alt", theta="new_az",
                        size='size', size_max=5,
                        direction="counterclockwise",
                        title = title,

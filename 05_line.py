@@ -43,7 +43,7 @@ for e in edges:
     th2 = df.loc[e[1]]['az']
     r2  = 90 - df.loc[e[1]]['alt']
 
-    data.append(go.Scatterpolar(r=[r1,r2], theta=[th1,th2], line=line_color, showlegend=False))
+    data.append(go.Scatterpolar(r=[r1,r2], theta=[th1,th2], line=line_color, showlegend=False, hoverinfo='none'))
 
 
 fig = go.Figure(data=data)
