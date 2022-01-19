@@ -7,6 +7,14 @@ from hypatie.data import cities
 from datetime import datetime
 import skychart as sch
 import plotly.graph_objects as go
+import pandas as pd
+
+def my_own_df(df):
+    my_df = pd.read_csv('hip7.csv').set_index('hip')
+    my_df = my_df.loc[df.index]
+    my_df = pd.merge(my_df.reset_index(), df[['alt','az']].reset_index(), how='left', on='hip')
+    my_df = my_df.set_index('hip')
+    return my_df
 
 city = 'strasbourg'
 
@@ -14,6 +22,9 @@ t = datetime.now()
 obs_loc = cities[city][:2]
 
 df = sch.visible_hipparcos(obs_loc, t)
+
+df = my_own_df(df)
+
 df_show = df[df['Vmag']<4]
 dc_const = sch.load_constellations()
 edges = sch.create_edges(dc_const)
@@ -36,7 +47,7 @@ star_marker = {'size': marker_size,
                'sizeref':2.*max(marker_size)/(8.**2),
                'sizemin':0.5}
 
-star_hovertext = '<b>'+df_show['hip']+ '</b><br>' + 'ra: ' + \
+star_hovertext = '<b>'+df_show['main_id']+ '</b><br>' + 'ra: ' + \
                  df_show['ra'].astype(str) + '<br>dec: ' + \
                  df_show['dec'].astype(str) + \
                  '<br>Vmag: ' + df_show['Vmag'].astype(str)
