@@ -1,4 +1,4 @@
-import core as sch
+import skychart as sch
 from hypatie.data import cities
 from datetime import datetime
 import matplotlib.pyplot as plt
@@ -6,5 +6,5 @@ import matplotlib.pyplot as plt
 t = datetime.now()
 obs_loc = cities['strasbourg'][:2]
 
-fig, ax, df = sch.draw(obs_loc, t, mag_max=4, alpha=0.3, figsize=(12,12))
+fig, ax, df = sch.draw(obs_loc, t, mag_max=4, alpha=0.3)
 plt.show()

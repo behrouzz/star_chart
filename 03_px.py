@@ -1,6 +1,6 @@
 from hypatie.data import cities
 from datetime import datetime
-import core as sch
+import skychart as sch
 
 city = 'strasbourg'
 
