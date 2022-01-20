@@ -24,6 +24,8 @@ obs_loc = cities[city][:2]
 df = sch.visible_hipparcos(obs_loc, t)
 
 df = my_own_df(df)
+df.loc[df['NAME'].notnull(), 'name'] = df['main_id'] + ' | ' + df['NAME']
+df.loc[df['NAME'].isna(), 'name'] = df['main_id']
 
 df_show = df[df['Vmag']<4]
 dc_const = sch.load_constellations()
@@ -47,7 +49,7 @@ star_marker = {'size': marker_size,
                'sizeref':2.*max(marker_size)/(8.**2),
                'sizemin':0.5}
 
-star_hovertext = '<b>'+df_show['main_id']+ '</b><br>' + 'ra: ' + \
+star_hovertext = '<b>'+df_show['name']+ '</b><br>' + 'ra: ' + \
                  df_show['ra'].astype(str) + '<br>dec: ' + \
                  df_show['dec'].astype(str) + \
                  '<br>Vmag: ' + df_show['Vmag'].astype(str)
