@@ -7,14 +7,30 @@ from hypatie.data import cities
 from datetime import datetime
 import skychart as sch
 import plotly.graph_objects as go
+import pandas as pd
+
+def my_own_df(df):
+    my_df = pd.read_csv('hip7.csv').set_index('hip')
+    my_df = my_df.loc[df.index]
+    my_df = pd.merge(my_df.reset_index(), df[['alt','az']].reset_index(), how='left', on='hip')
+    my_df = my_df.set_index('hip')
+    return my_df
 
 city = 'strasbourg'
 
 t = datetime.now()
+#t = datetime(2022, 1, 19, 22)
 obs_loc = cities[city][:2]
 
 df = sch.visible_hipparcos(obs_loc, t)
-df_show = df[df['Vmag']<4]
+
+df = my_own_df(df)
+
+df.loc[df['NAME'].notnull(), 'name'] = df['main_id'] + ' | ' + df['NAME']
+df.loc[df['NAME'].isna(), 'name'] = df['main_id']
+
+                     
+df_show = df[df['Vmag']<5]
 dc_const = sch.load_constellations()
 edges = sch.create_edges(dc_const)
 
@@ -31,15 +47,21 @@ df_show['hip'] = 'HIP ' + df_show['hip'].astype(str)
 
 marker_size = (1 + (df_show['Vmag'].max() - df_show['Vmag'].values))**1.7
 
+import plotly.express as px
+
 star_marker = {'size': marker_size,
                'sizemode':'area',
                'sizeref':2.*max(marker_size)/(8.**2),
-               'sizemin':0.5}
+               'sizemin':0.1,
+               'color': df_show['rgb'],
+               'opacity':1,
+               'line':{'width':0}}
 
-star_hovertext = '<b>'+df_show['hip']+ '</b><br>' + 'ra: ' + \
+star_hovertext = '<b>'+df_show['name']+ '</b><br>' + 'ra: ' + \
                  df_show['ra'].astype(str) + '<br>dec: ' + \
                  df_show['dec'].astype(str) + \
-                 '<br>Vmag: ' + df_show['Vmag'].astype(str)
+                 '<br>Vmag: ' + df_show['Vmag'].astype(str) + \
+                 '<br>Temperature: ' + df_show['temperature'].astype(int).astype(str)
 
 data = []
 
@@ -59,10 +81,11 @@ for e in edges:
     cosnt_data = go.Scatterpolar(r=[r1,r2],
                                  theta=[th1,th2],
                                  mode='lines',
-                                 line={'color':'blue'},
+                                 line={'color':'gray'},
                                  showlegend=False,
                                  #name='',
-                                 hoverinfo='skip')
+                                 hoverinfo='skip',
+                                 opacity=0.5)
     data.append(cosnt_data)
 
 data.append(star_data)
