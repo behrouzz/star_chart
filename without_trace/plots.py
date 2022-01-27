@@ -1,7 +1,7 @@
 import plotly.graph_objects as go
 
-def show_chart(fig, title='', height=1000, width=1000):
-    #fig = go.Figure(data=data)
+def show_chart(data, title='', height=1000, width=1000):
+    fig = go.Figure(data=data)
 
     angularaxis = {'direction': "counterclockwise",
                    'rotation': 90,
