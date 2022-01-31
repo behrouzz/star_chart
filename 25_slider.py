@@ -11,10 +11,10 @@ from constellations import const_str
 from tools import load_constellations, radec_to_altaz, create_edges
 
 
-df_loc = pd.read_csv('locations.csv')
+df_loc = pd.read_csv('data/locations.csv')
 cnt_ls = list(df_loc['country'].unique())
-hip7 = pd.read_csv('hip7.csv')
-ot = pd.read_csv('otypes.csv')
+hip7 = pd.read_csv('data/hip7.csv')
+ot = pd.read_csv('data/otypes.csv')
 dc_const = load_constellations(const_str)
 all_edges = create_edges(dc_const)
 
