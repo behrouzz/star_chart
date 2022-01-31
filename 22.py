@@ -1,25 +1,30 @@
-#from hypatie.data import cities
 from datetime import datetime
-import skychart as sch
 import plotly.graph_objects as go
 import pandas as pd
-
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
 from hypatie.simbad_otypes import text
 from io import StringIO
 from locations import locs
-from embeds import angularaxis, radialaxis
+from embeds import angularaxis, radialaxis, create_star_marker_hover
+from constellations import const_str
+from tools import load_constellations, radec_to_altaz, create_edges
+
 
 df_loc = pd.read_csv(StringIO(locs))
+cnt_ls = list(df_loc['country'].unique())
 hip7 = pd.read_csv('hip7.csv')
 ot = pd.read_csv(StringIO(text), header=0, usecols=[1,2], names=['short','long'])
+dc_const = load_constellations(const_str)
+all_edges = create_edges(dc_const)
 
 
 app = dash.Dash(__name__)
 
-app.layout = html.Div([html.Label('Time (UTC): '),
+app.layout = html.Div([dcc.Dropdown(id='cnt_dd', options=[{'label':i, 'value':i} for i in cnt_ls]),
+                       dcc.Dropdown(id='cit_dd'),
+                       html.Label('Time (UTC): '),
                        dcc.Input(id='inp_time',
                                  type='text',
                                  value=datetime.strftime(datetime.utcnow(), '%d/%m/%Y - %H:%M'),
@@ -28,29 +33,47 @@ app.layout = html.Div([html.Label('Time (UTC): '),
 
 
 @app.callback(
+    Output('cit_dd', 'options'),
+    Input('cnt_dd', 'value'))
+
+def update_city_dd(country):
+    cnt = 'France'
+    if country:
+        cnt = country
+    tmp_df = df_loc.copy(deep=True)
+    tmp_df = tmp_df[['country', 'city']].drop_duplicates()
+    city_options = tmp_df[tmp_df['country']==cnt]['city'].values.tolist()
+    city_options = [{'label':i, 'value':i} for i in city_options]
+    return city_options
+
+
+@app.callback(
     Output(component_id='chart', component_property='figure'),
-    Input(component_id='inp_time', component_property='value')
+    Input(component_id='inp_time', component_property='value'),
+    Input(component_id='cit_dd', component_property='value')
 )
 
-def update_plot(t):
-    time = datetime.strptime(t, '%d/%m/%Y - %H:%M')
-
+def update_plot(t, inp_city):
     city = 'Strasbourg'
+    if inp_city:
+        city = inp_city
     df_city = df_loc[df_loc['city']==city]
-    obs_loc = (df_city['lon'].iloc[0], df_city['lat'].iloc[0])
 
-    df_orig = sch.visible_hipparcos(obs_loc, time) #should be changed
-    df = df_orig.copy(deep=True)
+    time = datetime.utcnow().strftime('%d/%m/%Y - %H:%M')
     if t:
-        my_df = hip7.copy(deep=True)
-        my_df = my_df.set_index('hip')
-        my_df = my_df.loc[df.index]
-        my_df = pd.merge(my_df.reset_index(), df[['alt','az']].reset_index(), how='left', on='hip')
-        df = my_df.set_index('hip')
+        time = datetime.strptime(t, '%d/%m/%Y - %H:%M')
+    
+    #==============
+    #==============
+    lon = df_city['lon'].iloc[0]
+    lat = df_city['lat'].iloc[0]
+    df = hip7.copy(deep=True)
+    df['alt'], df['az'] = radec_to_altaz(lon, lat, df['ra'], df['dec'], time)
+    df = df[df['alt']>0]
 
     # otypes
-    df = pd.merge(df.reset_index(), ot, how='left', left_on='otype_txt', right_on='short')
-    del df['short']
+    df = pd.merge(df, ot, how='left', left_on='otype_txt', right_on='short')
+    #del df['short']
     df = df.set_index('hip')
 
     #-----------------
@@ -60,36 +83,22 @@ def update_plot(t):
 
                          
     df_show = df[df['Vmag']<5]
-    dc_const = sch.load_constellations()
-    edges = sch.create_edges(dc_const)
+    #edges = create_edges(dc_const)
+    edges = all_edges.copy()
 
     edges = [i for i in edges if (i[0] in df.index) and (i[1] in df.index)]
 
-    now_date = time.isoformat()[:10]
-    now_time = time.isoformat()[11:16]
-    title = '<b>'+city.title()+'</b>' + '<br>' + now_date + '<br>' + now_time
+    the_date = time.isoformat()[:10]
+    the_time = time.isoformat()[11:16]
+    title = '<b>'+city.title()+'</b>' + '<br>' + the_date + '<br>' + the_time + ' UTC'
 
     #=================================================
 
     df_show = df_show.reset_index()
     df_show['hip'] = 'HIP ' + df_show['hip'].astype(str)
-
-    marker_size = (1 + (df_show['Vmag'].max() - df_show['Vmag'].values))**1.7
-
-    star_marker = {'size': marker_size,
-                   'sizemode':'area',
-                   'sizeref':2.*max(marker_size)/(8.**2),
-                   'sizemin':0.1,
-                   'color': df_show['rgb'],
-                   'opacity':1,
-                   'line':{'width':0}}
-
-    star_hovertext = '<b>'+df_show['name']+ '</b><br>' + '<i>'+df_show['long']+'</i><br>' + \
-                     'ra: ' +  df_show['ra'].astype(str) + '<br>dec: ' + \
-                     df_show['dec'].astype(str) + \
-                     '<br>Vmag: ' + df_show['Vmag'].astype(str) + \
-                     '<br>Temperature: ' + df_show['temperature'].astype(int).astype(str)
-
+    
+    star_marker, star_hovertext = create_star_marker_hover(df_show)
+    
     data = []
 
     star_data = go.Scatterpolar(r= 90-df_show['alt'].values,
