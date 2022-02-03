@@ -15,7 +15,6 @@ from tools import load_constellations, radec_to_altaz, create_edges
 df_loc = pd.read_csv('data/locations.csv')
 cnt_ls = list(df_loc['country'].unique())
 hip7 = pd.read_csv('data/hip7.csv')
-ot = pd.read_csv('data/otypes.csv')
 dc_const = load_constellations(const_str)
 all_edges = create_edges(dc_const)
 df_gal = pd.read_csv('data/galaxiesV10.csv')
@@ -31,10 +30,9 @@ app.layout = html.Div([dcc.Dropdown(id='cnt_dd', options=[{'label':i, 'value':i}
                                  value=datetime.strftime(datetime.utcnow(), '%d/%m/%Y - %H:%M'),
                                  debounce=True, style=dt2_style),
                        html.Div(dcc.Slider(id='mag_slider',
-                                  min=0, max=7,
+                                  min=1, max=7,
                                   value=5,
                                   step=0.5,
-                                  #marks={0:'0', 1:'1', 2:'2', 3:'3', 4:'4', 5:'5', 6:'6', 7:'7'},
                                   tooltip={"placement": "bottom", "always_visible": True},
                                   vertical=False),
                                   style={'width':'1000px'}),
@@ -72,50 +70,30 @@ def update_plot(t, inp_city, inp_mag_max):
     time = datetime.utcnow().strftime('%d/%m/%Y - %H:%M')
     if t:
         time = datetime.strptime(t, '%d/%m/%Y - %H:%M')
-
-    #mag_max = 5
     
     if inp_mag_max:
         mag_max = inp_mag_max
-    
-    lon = df_city['lon'].iloc[0]
-    lat = df_city['lat'].iloc[0]
-    df = hip7.copy(deep=True)
-    df['alt'], df['az'] = radec_to_altaz(lon, lat, df['ra'], df['dec'], time)
-    df = df[df['alt']>0]
-
-    # otypes
-    df = pd.merge(df, ot, how='left', left_on='otype_txt', right_on='short').set_index('hip')
-
-    df.loc[df['NAME'].notnull(), 'name'] = df['main_id'] + ' | ' + df['NAME']
-    df.loc[df['NAME'].isna(), 'name'] = df['main_id']
-
-                         
-    df_show = df[df['Vmag']<mag_max].reset_index()
-    df_show['hip'] = 'HIP ' + df_show['hip'].astype(str)
-    
-    edges = all_edges.copy()
-
-    edges = [i for i in edges if (i[0] in df.index) and (i[1] in df.index)]
 
     title = '<b>'+city.title()+'</b>'+'<br>'+\
             time.isoformat()[:10]+'<br>'+\
             time.isoformat()[11:16] +' UTC'+'<br>'+\
-            str(mag_max)
+            '<i>Max mag: '+ str(mag_max)+'</i>'
+    
+    lon, lat = df_city['lon'].iloc[0], df_city['lat'].iloc[0]
+
+    # Base DataFrame (hip7 above horizon)
+    df = hip7.copy(deep=True)
+    df['alt'], df['az'] = radec_to_altaz(lon, lat, df['ra'], df['dec'], time)
+    df = df[df['alt']>0]
+    df = df.set_index('hip')
 
     #=================================================
-    
-    star_marker, star_hovertext = create_star_marker_hover(df_show)
-    
     data = []
-
-    star_data = go.Scatterpolar(r= 90-df_show['alt'].values,
-                                theta=df_show['az'].values,
-                                mode='markers',
-                                marker=star_marker,
-                                hovertext=star_hovertext,
-                                hoverinfo='text',
-                                showlegend=False)
+    
+    # CONSTELLATIONS ------------------------
+    
+    edges = all_edges.copy()
+    edges = [i for i in edges if (i[0] in df.index) and (i[1] in df.index)]
 
     for e in edges:
         th1 = df.loc[e[0]]['az']
@@ -131,9 +109,25 @@ def update_plot(t, inp_city, inp_mag_max):
                                      hoverinfo='skip',
                                      opacity=0.5)
         data.append(cosnt_data)
+    
+    # STARS ---------------------------------
 
-    data.append(star_data)
-    #---------------------------------
+    df_show = df[df['Vmag']<mag_max].reset_index()
+    
+    star_marker, star_hovertext = create_star_marker_hover(df_show)
+
+    star_data = go.Scatterpolar(r= 90-df_show['alt'].values,
+                                theta=df_show['az'].values,
+                                mode='markers',
+                                marker=star_marker,
+                                hovertext=star_hovertext,
+                                hoverinfo='text',
+                                showlegend=False)
+
+
+
+    
+    # GALAXIES ---------------------------------
     df_gal_tmp = df_gal.copy(deep=True)
     df_gal_tmp['alt'], df_gal_tmp['az'] = radec_to_altaz(lon, lat, df_gal_tmp['ra'], df_gal_tmp['dec'], time)
     df_gal_tmp = df_gal_tmp[df_gal_tmp['alt']>0]
@@ -150,10 +144,11 @@ def update_plot(t, inp_city, inp_mag_max):
                                 hoverinfo='text',
                                 showlegend=False)
 
-    data.append(gal_data)
-    
     #---------------------------------
 
+    data.append(star_data)
+    data.append(gal_data)
+    
     fig = go.Figure(data=data)
     
     fig.update_polars({'angularaxis':angularaxis, 'radialaxis':radialaxis})
