@@ -19,6 +19,17 @@ def create_star_marker_hover(df_show):
     
     return star_marker, star_hovertext
 
+def create_gal_marker_hover(df):
+    marker = {'color': 'rgb(255,0,0)'}
+    hovertext = '<b>'+df['name']+ '</b><br>' + \
+                '<i>'+df['long']+'</i><br>' + \
+                'RA: ' + df['ra'].apply(lambda x: round(x,5)).astype(str) + ' <i>(deg)</i><br>' + \
+                'DEC: ' + df['dec'].apply(lambda x: round(x,5)).astype(str) + ' <i>(deg)</i><br>' + \
+                'Vmag: ' + df['Vmag'].astype(str) + '<br>' + \
+                'Redshift: ' + df['z'].astype(str) + '<br>' + \
+                'Radial Velocity: ' + df['radvel'].astype(str) + ' <i>(km/s)</i><br>' + \
+                'Distance: ' + df['dist_pc'].astype(str) + ' <i>(pc)</i>'
+    return marker, hovertext
 
 angularaxis = {'direction': "counterclockwise",
                'rotation': 90,
