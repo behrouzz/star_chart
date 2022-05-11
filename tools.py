@@ -1,6 +1,7 @@
 import numpy as np
 from collections.abc import Iterable
 from datetime import datetime
+from hypatie import utc2tdb
 
 def radec_to_altaz(lon, lat, ra, dec, t):
     """
@@ -58,3 +59,20 @@ def create_edges(dc):
         for i in v:
             edges.append(i)
     return edges
+
+class SS_GCRS:
+    """
+    Solar System Objects in GCRS
+    """
+    def __init__(self, dc, t):
+        tdb = utc2tdb(t)
+        earth = dc[(0, 3)].get_pos(tdb) + dc[(3, 399)].get_pos(tdb)
+        self.sun = dc[(0,10)].get_pos(tdb) - earth
+        self.mercury = dc[(0, 1)].get_pos(tdb) - earth
+        self.venus = dc[(0, 2)].get_pos(tdb) - earth
+        self.moon = dc[(0, 3)].get_pos(tdb) + dc[(3, 301)].get_pos(tdb) - earth
+        self.mars = dc[(0, 4)].get_pos(tdb) - earth
+        self.jupiter = dc[(0, 5)].get_pos(tdb) - earth
+        self.saturn = dc[(0, 6)].get_pos(tdb) - earth
+        self.uranus = dc[(0, 7)].get_pos(tdb) - earth
+        self.neptune = dc[(0, 8)].get_pos(tdb) - earth
