@@ -88,6 +88,10 @@ class SS_GCRS:
         objs = ['sun', 'mercury', 'venus', 'moon', 'mars',
                 'jupiter', 'saturn', 'uranus', 'neptune']
         df = pd.DataFrame(arr, columns=['ra','dec','r'], index=objs)
+        colors = ["rgb(255,255,0)", "rgb(128,0,128)", "rgb(128,128,0)",
+                  "rgb(255,255,255)", "rgb(255,0,0)", "rgb(128,0,0)",
+                  "rgb(0,128,0)", "rgb(0,255,255)", "rgb(0,128,128)"]
+        df['color'] = colors
         return df
 
     def altaz(self, obs_loc):

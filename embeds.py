@@ -25,8 +25,9 @@ def create_ss_marker_hover(df):
     marker_size = 10
     marker = {'size': marker_size,
               'sizemode':'area',
+              'color': df['color'],
               'opacity':1,
-              'line':{'width':0}}
+              'line':{'width':0.5}}
     # ss_hover
     hovertext = '<b>'+df.index+'</b><br>' + \
                 '<i>'+df.index+'</i><br>' + \
@@ -37,6 +38,7 @@ def create_ss_marker_hover(df):
 
 def create_gal_marker_hover(df):
     marker = {'color': 'rgb(255,0,0)'}
+    
     hovertext = '<b>'+df['name']+ '</b><br>' + \
                 '<i>'+df['long']+'</i><br>' + \
                 'RA: ' + df['ra'].apply(lambda x: round(x,5)).astype(str) + ' <i>(deg)</i><br>' + \
