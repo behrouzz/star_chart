@@ -19,6 +19,22 @@ def create_star_marker_hover(df):
     
     return marker, hovertext
 
+
+def create_ss_marker_hover(df):
+    # ss_marker
+    marker_size = 10
+    marker = {'size': marker_size,
+              'sizemode':'area',
+              'opacity':1,
+              'line':{'width':0}}
+    # ss_hover
+    hovertext = '<b>'+df.index+'</b><br>' + \
+                '<i>'+df.index+'</i><br>' + \
+                'RA: '+df['ra'].apply(lambda x: round(x,5)).astype(str)+' <i>(deg)</i><br>' + \
+                'DEC: '+df['dec'].apply(lambda x: round(x,5)).astype(str)+' <i>(deg)</i><br>'
+    return marker, hovertext
+
+
 def create_gal_marker_hover(df):
     marker = {'color': 'rgb(255,0,0)'}
     hovertext = '<b>'+df['name']+ '</b><br>' + \

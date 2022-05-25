@@ -1,7 +1,9 @@
 import numpy as np
+import pandas as pd
 from collections.abc import Iterable
 from datetime import datetime
 from hypatie import utc2tdb
+from hypatie.transform import car2sph
 
 def radec_to_altaz(lon, lat, ra, dec, t):
     """
@@ -65,6 +67,7 @@ class SS_GCRS:
     Solar System Objects in GCRS
     """
     def __init__(self, dc, t):
+        self.t = t
         tdb = utc2tdb(t)
         earth = dc[(0, 3)].get_pos(tdb) + dc[(3, 399)].get_pos(tdb)
         self.sun = dc[(0,10)].get_pos(tdb) - earth
@@ -76,3 +79,19 @@ class SS_GCRS:
         self.saturn = dc[(0, 6)].get_pos(tdb) - earth
         self.uranus = dc[(0, 7)].get_pos(tdb) - earth
         self.neptune = dc[(0, 8)].get_pos(tdb) - earth
+
+    def radec(self):
+        arr = np.array([self.sun, self.mercury, self.venus, self.moon,
+                        self.mars, self.jupiter, self.saturn,
+                        self.uranus,self.neptune])
+        arr = car2sph(arr)
+        objs = ['sun', 'mercury', 'venus', 'moon', 'mars',
+                'jupiter', 'saturn', 'uranus', 'neptune']
+        df = pd.DataFrame(arr, columns=['ra','dec','r'], index=objs)
+        return df
+
+    def altaz(self, obs_loc):
+        df = self.radec()
+        lon, lat = obs_loc
+        df['alt'], df['az'] = radec_to_altaz(lon, lat, df['ra'].values, df['dec'].values, self.t)
+        return df
