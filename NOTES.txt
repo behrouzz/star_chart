@@ -1,0 +1,3 @@
+z3.py should be embedded in SS_GCRS class in tools
+
+then delete z2 and z3
