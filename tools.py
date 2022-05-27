@@ -2,8 +2,12 @@ import numpy as np
 import pandas as pd
 from collections.abc import Iterable
 from datetime import datetime
-from hypatie import utc2tdb
-from hypatie.transform import car2sph
+from hypatie.time import utc2tdb, utc2tt, datetime_to_jd
+from hypatie.transform import car2sph, _equsph2eclsph
+
+d2r = np.pi/180
+r2d = 180/np.pi
+au = 149597870.70000002 # km
 
 def rev(x):
     return x % 360
@@ -107,6 +111,8 @@ class SS_GCRS:
     def __init__(self, dc, t):
         self.t = t
         tdb = utc2tdb(t)
+        self.objects = ['sun', 'mercury', 'venus', 'moon', 'mars',
+                        'jupiter', 'saturn', 'uranus', 'neptune']
         earth = dc[(0, 3)].get_pos(tdb) + dc[(3, 399)].get_pos(tdb)
         self.sun = dc[(0,10)].get_pos(tdb) - earth
         self.mercury = dc[(0, 1)].get_pos(tdb) - earth
@@ -124,9 +130,8 @@ class SS_GCRS:
                         self.uranus,self.neptune])
         sph = car2sph(car)
         arr = np.hstack((car, sph))
-        objs = ['sun', 'mercury', 'venus', 'moon', 'mars',
-                'jupiter', 'saturn', 'uranus', 'neptune']
-        df = pd.DataFrame(arr, columns=['x','y','z','ra','dec','r'], index=objs)
+
+        df = pd.DataFrame(arr, columns=['x','y','z','ra','dec','r'], index=self.objects)
         colors = ["rgb(255,255,0)", "rgb(128,0,128)", "rgb(128,128,0)",
                   "rgb(255,255,255)", "rgb(255,0,0)", "rgb(128,0,0)",
                   "rgb(0,128,0)", "rgb(0,255,255)", "rgb(0,128,128)"]
@@ -140,5 +145,28 @@ class SS_GCRS:
         return df
 
     def final(self, obs_loc):
-        df = self.altat(obs_loc)
+        df = self.altaz(obs_loc)
+        lon_sun, lat_sun, r_sun = get_sun(self.t)
+        lonlats = _equsph2eclsph(df[['ra', 'dec']].values)
+        df['lon'] = lonlats[:,0]
+        df['lat'] = lonlats[:,1]
+        df['elognation'] = np.nan
+        df['fv'] = np.nan
+        elog_moon = np.arccos(np.cos((lon_sun-df.loc['moon']['lon'])*d2r) * np.cos(df.loc['moon']['lon']*d2r) )*r2d
+        df.loc['moon', ['elognation']] = elog_moon
+        df.loc['moon', ['fv']] = 180 - elog_moon
+
+        planets = ['mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune']
+        sun_gcrs = df.loc['sun'][['x','y','z']].values
+        pla_gcrs = df.loc[planets][['x','y','z']].values
+
+        d = df.loc['sun'][['x','y','z']] - df[['x','y','z']]
+        df['dist2sun'] = d.apply(lambda x: np.linalg.norm(x.values), axis=1) / au
+
+        df['R'] = df['r'] / au
+        
+        elon = np.arccos((s**2 + R**2 - r**2)/(2*s*R))*r2d
+        fv    = np.arccos((r**2 + R**2 - s**2)/(2*r*R))*r2d
+        
+        return df
         
