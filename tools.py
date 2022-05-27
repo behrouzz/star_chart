@@ -5,6 +5,9 @@ from datetime import datetime
 from hypatie import utc2tdb
 from hypatie.transform import car2sph
 
+def rev(x):
+    return x % 360
+
 def radec_to_altaz(lon, lat, ra, dec, t):
     """
     Convert ra/dec coordinates to az/alt coordinates
@@ -62,6 +65,41 @@ def create_edges(dc):
             edges.append(i)
     return edges
 
+
+def get_sun(t):
+    """
+    Get geocentric ecliptic position of the Sun
+    """
+    tt = utc2tt(t)
+    jd = datetime_to_jd(tt)
+    n = jd - 2451545
+    L = rev(280.460 + 0.985647*n) # mean longitude
+    g = rev(357.528 + 0.9856003*n) # mean anomaly
+    # Ecliptic coordinates
+    ecl_lon = rev(L + 1.915 * np.sin(g*d2r) + 0.020 * np.sin(2*g*d2r))
+    ecl_lat = 0
+    r = 1.00014 - 0.01671*np.cos(g*d2r) - 0.00014*np.cos(2*g*d2r)
+    return ecl_lon, ecl_lat, r
+
+
+def elon_fv(obj_name, df, lon_sun, s):
+    ra, dec, R = df.loc[obj_name, ['ra', 'dec', 'r']]
+    R = R / au
+    radec = np.array([ra, dec])
+    lon, lat = _equsph2eclsph(radec)
+
+    if obj_name=='moon':
+        elon = np.arccos(np.cos((lon_sun-lon)*d2r) * np.cos(lat*d2r) )*r2d
+        fv = 180 - elon
+    else:
+        sun_gcrs = df.loc['sun'][['x','y','z']].values
+        obj_gcrs = df.loc[obj_name][['x','y','z']].values
+        r = np.linalg.norm(np.array(sun_gcrs - obj_gcrs)) / au
+        elon = np.arccos((s**2 + R**2 - r**2)/(2*s*R))*r2d
+        fv    = np.arccos((r**2 + R**2 - s**2)/(2*r*R))*r2d
+    return elon, fv
+
+
 class SS_GCRS:
     """
     Solar System Objects in GCRS
@@ -81,13 +119,14 @@ class SS_GCRS:
         self.neptune = dc[(0, 8)].get_pos(tdb) - earth
 
     def radec(self):
-        arr = np.array([self.sun, self.mercury, self.venus, self.moon,
+        car = np.array([self.sun, self.mercury, self.venus, self.moon,
                         self.mars, self.jupiter, self.saturn,
                         self.uranus,self.neptune])
-        arr = car2sph(arr)
+        sph = car2sph(car)
+        arr = np.hstack((car, sph))
         objs = ['sun', 'mercury', 'venus', 'moon', 'mars',
                 'jupiter', 'saturn', 'uranus', 'neptune']
-        df = pd.DataFrame(arr, columns=['ra','dec','r'], index=objs)
+        df = pd.DataFrame(arr, columns=['x','y','z','ra','dec','r'], index=objs)
         colors = ["rgb(255,255,0)", "rgb(128,0,128)", "rgb(128,128,0)",
                   "rgb(255,255,255)", "rgb(255,0,0)", "rgb(128,0,0)",
                   "rgb(0,128,0)", "rgb(0,255,255)", "rgb(0,128,128)"]
@@ -99,3 +138,7 @@ class SS_GCRS:
         lon, lat = obs_loc
         df['alt'], df['az'] = radec_to_altaz(lon, lat, df['ra'].values, df['dec'].values, self.t)
         return df
+
+    def final(self, obs_loc):
+        df = self.altat(obs_loc)
+        
