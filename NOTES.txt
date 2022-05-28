@@ -1,3 +1,4 @@
 z ha ro vel konam
 az SS_GCRS class dar tools edame bedam : function e final
+app_mag & diameter irad daran. bayad edgham beshan tooye final
 

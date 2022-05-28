@@ -104,6 +104,26 @@ def elon_fv(obj_name, df, lon_sun, s):
     return elon, fv
 
 
+def app_mag(r, R, FV):
+    d0 = {'mercury':6.74, 'venus':16.92, 'mars':9.32,
+          'jupiter':191.01, 'saturn':158.2, 'uranus':63.95,
+          'neptune':61.55}
+
+    mags = {'mercury' : -0.36 + 5*log10(r*R) + 0.027 * FV + 2.2E-13 * FV**6,
+            'venus'   : -4.34 + 5*log10(r*R) + 0.013 * FV + 4.2E-7  * FV**3,
+            'mars'    : -1.51 + 5*log10(r*R) + 0.016 * FV,
+            'jupiter' : -9.25 + 5*log10(r*R) + 0.014 * FV,
+            'saturn'  :0,
+            'uranus'  : -7.15 + 5*log10(r*R) + 0.001 * FV,
+            'neptune' : -6.90 + 5*log10(r*R) + 0.001 * FV}
+    return mags
+
+def diameter(r):
+    return d0 / r
+    
+    
+
+
 class SS_GCRS:
     """
     Solar System Objects in GCRS
@@ -153,7 +173,7 @@ class SS_GCRS:
         
         df['elognation'] = np.nan
         df['fv'] = np.nan
-        elog_moon = np.arccos(np.cos((lon_sun-df.loc['moon']['lon'])*d2r) * np.cos(df.loc['moon']['lon']*d2r) )*r2d
+        elog_moon = np.arccos(np.cos((lon_sun-df.loc['moon']['lon'])*d2r) * np.cos(df.loc['moon']['lat']*d2r) )*r2d
         df.loc['moon', ['elognation']] = elog_moon
         df.loc['moon', ['fv']] = 180 - elog_moon
 
