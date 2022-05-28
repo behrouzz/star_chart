@@ -150,6 +150,7 @@ class SS_GCRS:
         lonlats = _equsph2eclsph(df[['ra', 'dec']].values)
         df['lon'] = lonlats[:,0]
         df['lat'] = lonlats[:,1]
+        
         df['elognation'] = np.nan
         df['fv'] = np.nan
         elog_moon = np.arccos(np.cos((lon_sun-df.loc['moon']['lon'])*d2r) * np.cos(df.loc['moon']['lon']*d2r) )*r2d
@@ -162,11 +163,15 @@ class SS_GCRS:
 
         d = df.loc['sun'][['x','y','z']] - df[['x','y','z']]
         df['dist2sun'] = d.apply(lambda x: np.linalg.norm(x.values), axis=1) / au
-
-        df['R'] = df['r'] / au
         
-        elon = np.arccos((s**2 + R**2 - r**2)/(2*s*R))*r2d
-        fv    = np.arccos((r**2 + R**2 - s**2)/(2*r*R))*r2d
+        r = df.loc[planets]['dist2sun'].values
+        R = (df.loc[planets]['r'] / au).values
+        
+        elon = np.arccos((r_sun**2 + R**2 - r**2)/(2*r_sun*R))*r2d
+        fv    = np.arccos((r**2 + R**2 - r_sun**2)/(2*r*R))*r2d
+
+        df.loc[planets, 'elognation'] = elon
+        df.loc[planets, 'fv'] = fv
         
         return df
         
