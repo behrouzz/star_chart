@@ -192,6 +192,17 @@ class SS_GCRS:
 
         df.loc[planets, 'elognation'] = elon
         df.loc[planets, 'fv'] = fv
+
+        # mag
+        tmp = pd.DataFrame(index=planets)
+        tmp['d0'] = [6.74, 16.92,9.32, 191.01, 158.2, 63.95, 61.55]
+        tmp['r'] = r
+        tmp['R'] = R
+        tmp['fv'] = df.loc[planets, 'fv']
         
-        return df
+        #s:r_sun
+        
+
+        
+        return df, tmp
         
