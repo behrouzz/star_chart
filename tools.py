@@ -86,43 +86,18 @@ def get_sun(t):
     return ecl_lon, ecl_lat, r
 
 
-def elon_fv(obj_name, df, lon_sun, s):
-    ra, dec, R = df.loc[obj_name, ['ra', 'dec', 'r']]
-    R = R / au
-    radec = np.array([ra, dec])
-    lon, lat = _equsph2eclsph(radec)
 
-    if obj_name=='moon':
-        elon = np.arccos(np.cos((lon_sun-lon)*d2r) * np.cos(lat*d2r) )*r2d
-        fv = 180 - elon
-    else:
-        sun_gcrs = df.loc['sun'][['x','y','z']].values
-        obj_gcrs = df.loc[obj_name][['x','y','z']].values
-        r = np.linalg.norm(np.array(sun_gcrs - obj_gcrs)) / au
-        elon = np.arccos((s**2 + R**2 - r**2)/(2*s*R))*r2d
-        fv    = np.arccos((r**2 + R**2 - s**2)/(2*r*R))*r2d
-    return elon, fv
-
-
-def app_mag(r, R, FV):
-    d0 = {'mercury':6.74, 'venus':16.92, 'mars':9.32,
-          'jupiter':191.01, 'saturn':158.2, 'uranus':63.95,
-          'neptune':61.55}
-
-    mags = {'mercury' : -0.36 + 5*log10(r*R) + 0.027 * FV + 2.2E-13 * FV**6,
-            'venus'   : -4.34 + 5*log10(r*R) + 0.013 * FV + 4.2E-7  * FV**3,
-            'mars'    : -1.51 + 5*log10(r*R) + 0.016 * FV,
-            'jupiter' : -9.25 + 5*log10(r*R) + 0.014 * FV,
-            'saturn'  :0,
-            'uranus'  : -7.15 + 5*log10(r*R) + 0.001 * FV,
-            'neptune' : -6.90 + 5*log10(r*R) + 0.001 * FV}
-    return mags
-
-def diameter(r):
-    return d0 / r
+def app_mag(name, r, R, FV):
+    mags = {'mercury' : -0.36 + 5*np.log10(r*R) + 0.027 * FV + 2.2E-13 * FV**6,
+            'venus'   : -4.34 + 5*np.log10(r*R) + 0.013 * FV + 4.2E-7  * FV**3,
+            'mars'    : -1.51 + 5*np.log10(r*R) + 0.016 * FV,
+            'jupiter' : -9.25 + 5*np.log10(r*R) + 0.014 * FV,
+            'saturn'  :0, # should be corrected!!
+            'uranus'  : -7.15 + 5*np.log10(r*R) + 0.001 * FV,
+            'neptune' : -6.90 + 5*np.log10(r*R) + 0.001 * FV}
+    return mags[name]
+  
     
-    
-
 
 class SS_GCRS:
     """
@@ -170,39 +145,36 @@ class SS_GCRS:
         lonlats = _equsph2eclsph(df[['ra', 'dec']].values)
         df['lon'] = lonlats[:,0]
         df['lat'] = lonlats[:,1]
-        
-        df['elognation'] = np.nan
-        df['fv'] = np.nan
-        elog_moon = np.arccos(np.cos((lon_sun-df.loc['moon']['lon'])*d2r) * np.cos(df.loc['moon']['lat']*d2r) )*r2d
-        df.loc['moon', ['elognation']] = elog_moon
-        df.loc['moon', ['fv']] = 180 - elog_moon
 
+        # NEW
         planets = ['mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune']
-        sun_gcrs = df.loc['sun'][['x','y','z']].values
-        pla_gcrs = df.loc[planets][['x','y','z']].values
+        df_s = df.loc[['sun']]
+        df_m = df.loc[['moon']]
+        df_p = df.loc[planets]
 
-        d = df.loc['sun'][['x','y','z']] - df[['x','y','z']]
-        df['dist2sun'] = d.apply(lambda x: np.linalg.norm(x.values), axis=1) / au
+        df_m['elognation'] = np.arccos(np.cos((lon_sun-df_m['lon'])*d2r) * np.cos(df_m['lat']*d2r) )*r2d
+        df_m['fv'] = 180 - df_m['elognation']
+
+        sun_gcrs = df_s[['x','y','z']].values
+        pla_gcrs = df_p[['x','y','z']].values
+
+        d = df_s[['x','y','z']].values - df_p[['x','y','z']].values
+        r = np.array([np.linalg.norm(i)/au for i in d]) # distance to sun
+        R = (df_p['r'] / au).values
         
-        r = df.loc[planets]['dist2sun'].values
-        R = (df.loc[planets]['r'] / au).values
-        
-        elon = np.arccos((r_sun**2 + R**2 - r**2)/(2*r_sun*R))*r2d
-        fv    = np.arccos((r**2 + R**2 - r_sun**2)/(2*r*R))*r2d
+        df_p['elognation'] = np.arccos((r_sun**2 + R**2 - r**2)/(2*r_sun*R))*r2d
+        df_p['fv']    = np.arccos((r**2 + R**2 - r_sun**2)/(2*r*R))*r2d
 
-        df.loc[planets, 'elognation'] = elon
-        df.loc[planets, 'fv'] = fv
-
-        # mag
+        # apparent magnitude
         tmp = pd.DataFrame(index=planets)
         tmp['d0'] = [6.74, 16.92,9.32, 191.01, 158.2, 63.95, 61.55]
         tmp['r'] = r
         tmp['R'] = R
-        tmp['fv'] = df.loc[planets, 'fv']
-        
-        #s:r_sun
-        
+        tmp['fv'] = df_p['fv']
+        tmp.reset_index(inplace=True)
+        df_p['mag'] = tmp.apply(lambda x: app_mag(x['index'], x['r'], x['R'], x['fv']), axis=1).values
+        # diameter
+        df_p['diam'] = tmp['d0'].values / r
 
-        
-        return df, tmp
+        return df, df_s, df_m, df_p
         
