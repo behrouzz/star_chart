@@ -6,7 +6,8 @@ import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
 
-from embeds import angularaxis, radialaxis, create_star_marker_hover, create_gal_marker_hover, create_ss_marker_hover
+#from embeds import angularaxis, radialaxis, create_star_marker_hover, create_gal_marker_hover, create_ss_marker_hover
+from embeds import *
 from styles import *
 from constellations import const_str
 from tools import load_constellations, radec_to_altaz, create_edges, SS_GCRS
@@ -146,28 +147,60 @@ def update_plot(t, inp_city, inp_mag_max):
                                 hoverinfo='text',
                                 showlegend=False)
 
+    #------------------------------------------
+    data.append(star_data)
+    data.append(gal_data)
+    
     # SOLAR SYSTEM ----------------------------
     
     ss = SS_GCRS(dc, time)
-    df_ss = ss.altaz((lon, lat))
-    df_ss = df_ss[df_ss['alt']>=0]
+    df, df_s, df_m, df_p = ss.final((lon, lat))
 
-    ss_marker, ss_hovertext = create_ss_marker_hover(df_ss)
+    df_s = df_s[df_s['alt']>=0]
+    df_m = df_m[df_m['alt']>=0]
+    df_p = df_p[df_p['alt']>=0]
 
-    ss_data = go.Scatterpolar(r= 90-df_ss['alt'].values,
-                            theta=df_ss['az'].values,
-                            mode='markers',
-                           marker_symbol='circle-cross',
-                            marker=ss_marker,
-                            hovertext=ss_hovertext,
-                            hoverinfo='text',
-                            showlegend=False)
+    if len(df_s) > 0:
+        sun_marker, sun_hovertext = create_sun_marker_hover(df_s)
+        sun_data = go.Scatterpolar(r= 90-df_s['alt'].values,
+                                   theta=df_s['az'].values,
+                                   mode='markers',
+                                   marker_symbol='circle-cross',
+                                   marker=sun_marker,
+                                   hovertext=sun_hovertext,
+                                   hoverinfo='text',
+                                   showlegend=False)
+        data.append(sun_data)
+
+    if len(df_m) > 0:
+        moon_marker, moon_hovertext = create_moon_marker_hover(df_m)
+        moon_data = go.Scatterpolar(r= 90-df_m['alt'].values,
+                                   theta=df_m['az'].values,
+                                   mode='markers',
+                                   marker_symbol='circle-cross',
+                                   marker=moon_marker,
+                                   hovertext=moon_hovertext,
+                                   hoverinfo='text',
+                                   showlegend=False)
+        data.append(moon_data)
+
+    if len(df_p) > 0:
+        p_marker, p_hovertext = create_planets_marker_hover(df_p)
+        p_data = go.Scatterpolar(r= 90-df_p['alt'].values,
+                                   theta=df_p['az'].values,
+                                   mode='markers',
+                                   marker_symbol='circle-cross',
+                                   marker=p_marker,
+                                   hovertext=p_hovertext,
+                                   hoverinfo='text',
+                                   showlegend=False)
+        data.append(p_data)
+        
+
     
     #---------------------------------
 
-    data.append(star_data)
-    data.append(gal_data)
-    data.append(ss_data)
+
     
     fig = go.Figure(data=data)
     
