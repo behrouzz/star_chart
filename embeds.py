@@ -96,21 +96,20 @@ radialaxis = {'tickmode':'array',
               'gridcolor': '#222',
               'linecolor': '#222'}
 
-dd1_style = {'width':'250px',
-             'background-color':'black',
-             'color':'blue'}
+dd1_style = {'width':'250px', 'color':'blue'}
+dd2_style = {'width':'250px', 'color':'blue', 'display':'inline-block'}
 
-dd2_style = {'width':'250px',
-             'background-color':'black',
-             'color':'blue'}
+dt_lb_style = {'color':'brown'}
+tt_lb_style = {'color':'brown'}
 
-dt1_style = {#'width':'150px',
-             'height':'20px',
-             'background-color':'black',
-             'color':'white'}
+hour_style = {'width':'50px',
+              'font-size':'14px',
+              'vertical-align':'middle',
+              'color':'blue', 'display':'inline-block'}
 
-dt2_style = {'width':'115px',
-             'height':'20px',
-             'background-color':'black',
-             'color':'white'}
+minute_style = {'width':'50px',
+                'font-size':'14px',
+                'vertical-align':'middle',
+                'color':'blue', 'display':'inline-block'}
+
 #{'display':'inline-block'}
