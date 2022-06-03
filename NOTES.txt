@@ -1,2 +1,1 @@
-t_hour & t_minute be soorate dropdown dorost shod
-hala bayad ina ro befrestam vase function ta update beshe va ba date tarkib beshe
+should add zoom buttons

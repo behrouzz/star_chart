@@ -14,6 +14,9 @@ from tools import load_constellations, radec_to_altaz, create_edges, SS_GCRS
 
 from numeph import load_pickle
 
+from PIL import Image
+img = Image.open('ads.jpg')
+
 df_loc = pd.read_csv('data/locations.csv')
 cnt_ls = list(df_loc['country'].unique())
 hip7 = pd.read_csv('data/hip7.csv')
@@ -222,6 +225,18 @@ def update_plot(dt, hr, mn, inp_city, inp_mag_max):
     fig.update_polars({'angularaxis':angularaxis, 'radialaxis':radialaxis})
 
     fig.update_layout(title=title, height=1000, width=1000, template='plotly_dark')
+
+    fig.add_layout_image(
+    dict(
+        source=img,
+        xref="paper", yref="paper",
+        x=0.95, y=1.07,
+        sizex=0.1, sizey=0.1,
+        #xanchor="left",
+        #yanchor="bottom",
+        opacity=1
+    )
+)
 
     return fig
 
