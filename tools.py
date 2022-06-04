@@ -154,6 +154,7 @@ class SS_GCRS:
 
         df_m['elognation'] = np.arccos(np.cos((lon_sun-df_m['lon'])*d2r) * np.cos(df_m['lat']*d2r) )*r2d
         df_m['fv'] = 180 - df_m['elognation']
+        df_m['phase'] = ((180-df_m['fv'])/180)*100
 
         sun_gcrs = df_s[['x','y','z']].values
         pla_gcrs = df_p[['x','y','z']].values
@@ -164,6 +165,7 @@ class SS_GCRS:
         
         df_p['elognation'] = np.arccos((r_sun**2 + R**2 - r**2)/(2*r_sun*R))*r2d
         df_p['fv']    = np.arccos((r**2 + R**2 - r_sun**2)/(2*r*R))*r2d
+        df_p['phase'] = ((180-df_p['fv'])/180)*100
 
         # apparent magnitude
         tmp = pd.DataFrame(index=planets)

@@ -35,7 +35,7 @@ def create_sun_marker_hover(df):
 
 def create_moon_marker_hover(df):
     # moon_marker
-    marker = {'size': 20,
+    marker = {'size': 18,
               'sizemode':'area',
               'color': 'rgb(255,255,255)',
               'opacity':1,
@@ -44,13 +44,14 @@ def create_moon_marker_hover(df):
     hovertext = '<b>'+'Moon'+'</b><br>' + \
                 'RA: '+df['ra'].apply(lambda x: round(x,5)).astype(str)+' <i>(deg)</i><br>' + \
                 'DEC: '+df['dec'].apply(lambda x: round(x,5)).astype(str)+' <i>(deg)</i><br>' + \
-                'Elognation: '+df['elognation'].apply(lambda x: round(x,5)).astype(str)+' <i>(deg)</i><br>' + \
-                'FV: '+df['fv'].apply(lambda x: round(x,5)).astype(str)+' <i>(deg)</i><br>'
+                'Elognation: '+df['elognation'].apply(lambda x: int(x)).astype(str)+' <i>(deg)</i><br>' + \
+                'Phase: '+df['phase'].apply(lambda x: int(x)).astype(str)+' <i>%</i><br>'
     return marker, hovertext
 
 
 def create_planets_marker_hover(df):
-    marker_size = df['diam']
+    #marker_size = df['diam']
+    marker_size = (1 + (df['mag'].max() - df['mag'].values))**1.7
     # planets_marker
     marker = {'size': marker_size,
               'sizemode':'area',
@@ -63,10 +64,10 @@ def create_planets_marker_hover(df):
     hovertext = '<b>'+df.index.str.title()+'</b><br>' + \
                 'RA: '+df['ra'].apply(lambda x: round(x,5)).astype(str)+' <i>(deg)</i><br>' + \
                 'DEC: '+df['dec'].apply(lambda x: round(x,5)).astype(str)+' <i>(deg)</i><br>' + \
-                'Elognation: '+df['elognation'].apply(lambda x: round(x,5)).astype(str)+' <i>(deg)</i><br>' + \
-                'FV: '+df['fv'].apply(lambda x: round(x,5)).astype(str)+' <i>(deg)</i><br>' + \
-                'App. magnitude : '+df['mag'].apply(lambda x: round(x,5)).astype(str)+'<br>' + \
-                'Diameter : '+df['diam'].apply(lambda x: round(x,5)).astype(str)+' <i>(deg)</i><br>'
+                'Elognation: '+df['elognation'].apply(lambda x: int(x)).astype(str)+' <i>(deg)</i><br>' + \
+                'Phase: '+df['phase'].apply(lambda x: int(x)).astype(str)+' <i>%</i><br>' + \
+                'Apparent magnitude : '+df['mag'].apply(lambda x: round(x,1)).astype(str)+'<br>' + \
+                'Diameter : '+df['diam'].apply(lambda x: round(x,1)).astype(str)+' <i>(arcsec)</i><br>'
     return marker, hovertext
 
 

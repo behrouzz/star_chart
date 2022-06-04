@@ -17,6 +17,7 @@ from numeph import load_pickle
 from PIL import Image
 img = Image.open('ads.jpg')
 
+
 df_loc = pd.read_csv('data/locations.csv')
 cnt_ls = list(df_loc['country'].unique())
 hip7 = pd.read_csv('data/hip7.csv')
@@ -182,36 +183,39 @@ def update_plot(dt, hr, mn, inp_city, inp_mag_max):
         sun_marker, sun_hovertext = create_sun_marker_hover(df_s)
         sun_data = go.Scatterpolar(r= 90-df_s['alt'].values,
                                    theta=df_s['az'].values,
-                                   mode='markers',
+                                   mode='markers+text', # new
                                    marker_symbol='circle-cross',
                                    marker=sun_marker,
                                    hovertext=sun_hovertext,
                                    hoverinfo='text',
+                                   text='Sun', textposition="top center", # new
                                    showlegend=False)
         data.append(sun_data)
 
     if len(df_m) > 0:
         moon_marker, moon_hovertext = create_moon_marker_hover(df_m)
         moon_data = go.Scatterpolar(r= 90-df_m['alt'].values,
-                                   theta=df_m['az'].values,
-                                   mode='markers',
-                                   marker_symbol='circle-cross',
-                                   marker=moon_marker,
-                                   hovertext=moon_hovertext,
-                                   hoverinfo='text',
-                                   showlegend=False)
+                                    theta=df_m['az'].values,
+                                    mode='markers+text', # new
+                                    marker_symbol='circle-cross',
+                                    marker=moon_marker,
+                                    hovertext=moon_hovertext,
+                                    hoverinfo='text',
+                                    text='Moon', textposition="top center", # new
+                                    showlegend=False)
         data.append(moon_data)
 
     if len(df_p) > 0:
         p_marker, p_hovertext = create_planets_marker_hover(df_p)
         p_data = go.Scatterpolar(r= 90-df_p['alt'].values,
-                                   theta=df_p['az'].values,
-                                   mode='markers',
-                                   marker_symbol='circle-cross',
-                                   marker=p_marker,
-                                   hovertext=p_hovertext,
-                                   hoverinfo='text',
-                                   showlegend=False)
+                                 theta=df_p['az'].values,
+                                 mode='markers+text', # new
+                                 marker_symbol='circle-cross',
+                                 marker=p_marker,
+                                 hovertext=p_hovertext,
+                                 hoverinfo='text',
+                                 text=df_p.index.str[:3], textposition="top center", # new
+                                 showlegend=False)
         data.append(p_data)
         
 
