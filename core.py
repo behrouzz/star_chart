@@ -12,10 +12,10 @@ from styles import *
 from constellations import const_str
 from tools import load_constellations, radec_to_altaz, create_edges, SS_GCRS
 
-from numeph import load_pickle
+from hypatie.solar_system import load_pickle
 
 from PIL import Image
-img = Image.open('ads.jpg')
+img = Image.open('data/ads.jpg')
 
 
 df_loc = pd.read_csv('data/locations.csv')
