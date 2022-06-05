@@ -13,21 +13,32 @@ from constellations import const_str
 from tools import load_constellations, radec_to_altaz, create_edges, SS_GCRS
 
 from hypatie.solar_system import load_pickle
+from urllib.request import urlretrieve
+import os
 
 from PIL import Image
 img = Image.open('static/ads.jpg')
 
 
-df_loc = pd.read_csv('static/locations.csv')
+df_loc = pd.read_csv('https://raw.githubusercontent.com/behrouzz/star_chart/main/data/locations.csv')
 cnt_ls = list(df_loc['country'].unique())
-hip7 = pd.read_csv('static/hip7.csv')
+hip7 = pd.read_csv('https://raw.githubusercontent.com/behrouzz/star_chart/main/data/hip7.csv')
 dc_const = load_constellations(const_str)
 all_edges = create_edges(dc_const)
-df_gal = pd.read_csv('static/galaxiesV10.csv')
-dc = load_pickle('static/de440s_2020_2030.pickle')
+df_gal = pd.read_csv('https://raw.githubusercontent.com/behrouzz/star_chart/main/data/galaxiesV10.csv')
+#dc = load_pickle('data/de440s_2020_2030.pickle')
+url = "https://raw.githubusercontent.com/behrouzz/star_chart/main/data/de440s_2020_2030.pickle"
+
+tmp_adr = 'tmp.pickle'
+
+if not os.path.exists(tmp_adr):
+    urlretrieve(url, tmp_adr)
+
+dc = load_pickle(tmp_adr)
 
 
 app = dash.Dash(__name__)
+server = app.server
 
 app.layout = html.Div([dcc.Dropdown(id='cnt_dd', options=[{'label':i, 'value':i} for i in cnt_ls], placeholder='Country', style=dd1_style),
                        dcc.Dropdown(id='cit_dd', placeholder='City', style=dd2_style),
