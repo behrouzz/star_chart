@@ -1,69 +1,74 @@
 from datetime import datetime, date
 import pandas as pd
-
 import plotly.graph_objects as go
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
-
-#from embeds import angularaxis, radialaxis, create_star_marker_hover, create_gal_marker_hover, create_ss_marker_hover
 from embeds import *
 from styles import *
 from constellations import const_str
 from tools import load_constellations, radec_to_altaz, create_edges, SS_GCRS
-
 from hypatie.solar_system import load_pickle
-from urllib.request import urlretrieve
-import os
-
 from PIL import Image
+
 img = Image.open('static/ads.jpg')
-
-
-df_loc = pd.read_csv('https://raw.githubusercontent.com/behrouzz/star_chart/main/data/locations.csv')
+df_loc = pd.read_csv('static/locations.csv')
 cnt_ls = list(df_loc['country'].unique())
-hip7 = pd.read_csv('https://raw.githubusercontent.com/behrouzz/star_chart/main/data/hip7.csv')
+hip7 = pd.read_csv('static/hip7.csv')
 dc_const = load_constellations(const_str)
 all_edges = create_edges(dc_const)
-df_gal = pd.read_csv('https://raw.githubusercontent.com/behrouzz/star_chart/main/data/galaxiesV10.csv')
-#dc = load_pickle('data/de440s_2020_2030.pickle')
-url = "https://raw.githubusercontent.com/behrouzz/star_chart/main/data/de440s_2020_2030.pickle"
-
-tmp_adr = 'tmp.pickle'
-
-if not os.path.exists(tmp_adr):
-    urlretrieve(url, tmp_adr)
-
-dc = load_pickle(tmp_adr)
+df_gal = pd.read_csv('static/galaxiesV10.csv')
+dc = load_pickle('static/de440s_2020_2030.pickle')
 
 
-app = dash.Dash(__name__)
+
+app = dash.Dash(__name__,
+                assets_url_path='static',
+                assets_folder='static', title='Sky | AstroDataScience')
 server = app.server
 
-app.layout = html.Div([dcc.Dropdown(id='cnt_dd', options=[{'label':i, 'value':i} for i in cnt_ls], placeholder='Country', style=dd1_style),
-                       dcc.Dropdown(id='cit_dd', placeholder='City', style=dd2_style),
-                       html.P(),
-                       html.Label('Date (UTC): ', style=dt_lb_style),
-                       dcc.DatePickerSingle(
-                           id='inp_date',
-                           min_date_allowed=date(2020, 1, 1),
-                           max_date_allowed=date(2030, 12, 31),
-                           date=date.today(),
-                           display_format='DD/MM/YYYY'),
-                       #html.Br(),
-                       html.Code(' <> '),
-                       html.Label('Time (UTC): ', style=tt_lb_style),
-                       dcc.Dropdown(id='t_hour', options=[{'label':str(i).zfill(2), 'value':str(i).zfill(2)} for i in range(24)], placeholder='HH', style=hour_style),
-                       html.Code(':'),
-                       dcc.Dropdown(id='t_minute', options=[{'label':str(i).zfill(2), 'value':str(i).zfill(2)} for i in range(60)], placeholder='MM', style=minute_style),
-                       #html.Div(id='output-container-date-picker-single')
+# DropDowns
+dd_country = dcc.Dropdown(id='cnt_dd', options=[{'label':i, 'value':i} for i in cnt_ls],
+                          placeholder='Country', className='cnt-cit')
+dd_city = dcc.Dropdown(id='cit_dd', placeholder='City', className='cnt-cit')
+
+dd_hour = dcc.Dropdown(id='t_hour', options=[{'label':str(i).zfill(2), 'value':str(i).zfill(2)} for i in range(24)],
+                       placeholder='HH', style=hhmm_style)
+dd_minute = dcc.Dropdown(id='t_minute', options=[{'label':str(i).zfill(2), 'value':str(i).zfill(2)} for i in range(60)],
+                         placeholder='MM', style=hhmm_style)
+
+
+app.layout = html.Div([html.Div(className='cnt-cit-div',
+                                children=[dd_country, dd_city,
+                                          html.P('.', style={'color':'white'}), html.Br(style={'display': 'block'})]),
+
+                       # Date & Time
+                       html.Div([# Date
+                            html.Label('Date (UTC): ', className='brown'),
+                            dcc.DatePickerSingle(
+                               id='inp_date',
+                               min_date_allowed=date(2020, 1, 1),
+                               max_date_allowed=date(2030, 12, 31),
+                               date=date.today(),
+                               display_format='DD/MM/YYYY'),
+                            html.Code(' <> '),
+                            
+                            # Time
+                            html.Label('Time (UTC): ', className='brown'),
+                            dd_hour,
+                            html.Code(':'),
+                            dd_minute,
+                            html.Br(style={'display': 'block'}),
+                            html.P('Maximum apparent magnitude:', className='mag'),
+                            ]),
+                       
                        html.Div(dcc.Slider(id='mag_slider',
-                                  min=1, max=7,
-                                  value=5,
-                                  step=0.5,
-                                  tooltip={"placement": "bottom", "always_visible": True},
-                                  vertical=False),
-                                  style={'width':'1000px'}),
+                                           min=1, max=7,
+                                           value=5,
+                                           step=0.5,
+                                           tooltip={"placement": "bottom", "always_visible": True},
+                                           vertical=False),
+                                style={'width':'1000px'}),
                        dcc.Graph(id='chart')])
 
 
@@ -84,7 +89,6 @@ def update_city_dd(country):
 
 @app.callback(
     Output(component_id='chart', component_property='figure'),
-    #Input(component_id='inp_time', component_property='value'),
     Input(component_id='inp_date', component_property='date'),
     Input(component_id='t_hour', component_property='value'),
     Input(component_id='t_minute', component_property='value'),
@@ -98,10 +102,9 @@ def update_plot(dt, hr, mn, inp_city, inp_mag_max):
         city = inp_city
     df_city = df_loc[df_loc['city']==city]
 
-    time = datetime.utcnow()#.strftime('%d/%m/%Y - %H:%M')
+    time = datetime.utcnow()
     if (dt is not None) and (hr is not None) and (mn is not None):
         dt_hr_mn = dt + 'T' + hr+':'+mn
-        #time = datetime.strptime(t, '%d/%m/%Y - %H:%M')
         time = datetime.strptime(dt_hr_mn, '%Y-%m-%dT%H:%M') # movaqat
     
     if inp_mag_max:
@@ -247,8 +250,6 @@ def update_plot(dt, hr, mn, inp_city, inp_mag_max):
         xref="paper", yref="paper",
         x=0.95, y=1.07,
         sizex=0.1, sizey=0.1,
-        #xanchor="left",
-        #yanchor="bottom",
         opacity=1
     )
 )

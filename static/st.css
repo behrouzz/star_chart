@@ -1,0 +1,23 @@
+.cnt-cit {
+display: inline-block;
+float: left;
+width: calc(100%/5);
+}
+
+.cnt-cit-div {
+/*
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 90%;
+  */
+}
+
+.brown {
+  color: brown;
+  }
+
+.mag {
+   vertical-align: text-bottom;
+   color: blue;
+   }
