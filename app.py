@@ -69,7 +69,8 @@ app.layout = html.Div([html.Div(className='cnt-cit-div',
                                            tooltip={"placement": "bottom", "always_visible": True},
                                            vertical=False),
                                 style={'width':'1000px'}),
-                       dcc.Graph(id='chart')])
+                       dcc.Graph(id='chart',
+                                 config={'scrollZoom': False})]) # NEW
 
 
 @app.callback(
@@ -242,7 +243,9 @@ def update_plot(dt, hr, mn, inp_city, inp_mag_max):
     
     fig.update_polars({'angularaxis':angularaxis, 'radialaxis':radialaxis})
 
-    fig.update_layout(title=title, height=1000, width=1000, template='plotly_dark')
+    fig.update_layout(title=title, height=1000, width=1000, template='plotly_dark',
+                      #dragmode=False, # NEW
+                      )
 
     fig.add_layout_image(
     dict(
